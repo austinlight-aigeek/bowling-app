@@ -77,11 +77,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
-      - name: Set environment variables
+      - name: Run Integration Tests
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-      - name: Run Integration Tests
         run: |
           echo "Running Backend Integration Tests..."
           pytest backend/tests/integration/test_endpoints.py
