@@ -17,7 +17,7 @@ def calculate_score(rolls: List[int]) -> int:
     score = 0
     roll_index = 0
     for frame in range(10):
-        if rolls[roll_index] == 10:  # Strike
+        if rolls[roll_index] == 10:  # Strike all
             score += 10 + rolls[roll_index + 1] + rolls[roll_index + 2]
             roll_index += 1
         elif sum(rolls[roll_index : roll_index + 2]) == 10:  # Spare
