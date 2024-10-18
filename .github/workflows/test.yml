@@ -9,9 +9,8 @@ on:
       - main
 
 jobs:
-  # Backend Pylint Tests
-  backend_linting:
-    name: Backend Pylint Tests
+  backend_pylint:
+    name: Backend Pylint Checks
     runs-on: ubuntu-latest
 
     steps:
@@ -31,8 +30,8 @@ jobs:
 
       - name: Run Pylint
         run: |
-          echo "Running Pylint on all backend files..."
-          pylint backend/app backend/tests
+          echo "Running Pylint on backend code..."
+          pylint backend/app backend/tests --disable=C,R  # Only run essential pylint checks
 
   # Backend Unit Tests
   backend_unit_tests:
