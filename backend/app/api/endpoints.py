@@ -3,7 +3,6 @@ from app.models.game import Game, Roll, calculate_score
 import openai
 import os
 
-
 router = APIRouter()
 
 games = {}  # Store games in memory for simplicity
@@ -61,22 +60,28 @@ def get_summary(game_id: int, model: str = "gpt"):
 
 
 def get_gpt_summary(prompt: str):
+    print(f"OpenAI API Key: {openai.api_key}")  # Debugging line
     try:
         response = openai.Completion.create(
             engine="text-davinci-003", prompt=prompt, max_tokens=100
         )
         summary = response.choices[0].text.strip()
     except Exception as e:
+        print(f"Error: {e}")  # Debugging line
         raise HTTPException(status_code=500, detail="Error generating GPT summary")
 
     return {"summary": summary}
 
 
 def get_bert_summary(prompt: str):
-    # Here, you can use a BERT-based model from Hugging Face's transformers library.
+    # Add prompt engineering to structure the input for BERT
+    structured_prompt = f"Provide a concise summary of the following bowling game details:\n\n{prompt}\n\nFocus on key game moments and scoring."
+
     from transformers import pipeline
 
     summarizer = pipeline("summarization", model="bert-base-uncased")
-    summary = summarizer(prompt, max_length=50, min_length=25, do_sample=False)
+    summary = summarizer(
+        structured_prompt, max_length=50, min_length=25, do_sample=False
+    )
 
     return {"summary": summary[0]["summary_text"]}
