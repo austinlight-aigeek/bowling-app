@@ -61,8 +61,14 @@ def get_summary(game_id: int, model: str = "gpt"):
 def get_gpt_summary(prompt: str):
     try:
         # Initialize OpenAI client with the API key
-        client = OpenAI(
-            api_key=os.environ.get("OPENAI_API_KEY"),
+        client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+        # Craft a detailed prompt to help GPT generate better summaries
+        prompt = (
+            f"You're summarizing a bowling game. The game ID is {game_id}. "
+            f"The rolls in the game are: {game.rolls}. "
+            f"Provide a detailed but concise description of the game progress, key moments, and current score. "
+            f"Highlight important rolls like strikes and spares, and mention if the game is nearing completion."
         )
 
         # Call the chat completion API
@@ -89,7 +95,12 @@ def get_gpt_summary(prompt: str):
 
 def get_bert_summary(prompt: str):
     # Add prompt engineering to structure the input for BERT
-    structured_prompt = f"Provide a concise summary of the following bowling game details:\n\n{prompt}\n\nFocus on key game moments and scoring."
+    structured_prompt = (
+        f"Summarize the current state of the bowling game with ID {game_id}. "
+        f"The rolls in the game are: {game.rolls}. "
+        f"Highlight key events like strikes, spares, and overall game progress. "
+        f"Provide a concise summary focused on major game events and the current score."
+    )
 
     from transformers import pipeline
 

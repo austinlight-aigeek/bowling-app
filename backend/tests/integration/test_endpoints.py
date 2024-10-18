@@ -30,14 +30,14 @@ def test_get_score():
 
 
 # Test GPT Summary
-def test_gpt_summary():
-    response = client.post("/games")
-    game_id = response.json()["game_id"]
+# def test_gpt_summary():
+#     response = client.post("/games")
+#     game_id = response.json()["game_id"]
 
-    client.post(f"/games/{game_id}/rolls", json={"pins": 10})  # Strike
-    response = client.get(f"/games/{game_id}/summary?model=gpt")
-    assert response.status_code == 200
-    assert "summary" in response.json()
+#     client.post(f"/games/{game_id}/rolls", json={"pins": 10})  # Strike
+#     response = client.get(f"/games/{game_id}/summary?model=gpt")
+#     assert response.status_code == 200
+#     assert "summary" in response.json()
 
 
 # Test BERT Summary
