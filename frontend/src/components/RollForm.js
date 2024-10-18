@@ -5,7 +5,12 @@ const RollForm = ({ onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(pins);
+    const parsedPins = parseInt(pins, 10);
+    if (isNaN(parsedPins) || parsedPins < 0 || parsedPins > 10) {
+      alert("Please enter a valid number between 0 and 10.");
+      return;
+    }
+    onSubmit(parsedPins);
     setPins("");
   };
 

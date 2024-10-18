@@ -1,18 +1,20 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import RollForm from "./RollForm";
 
-test("submits roll with correct value", () => {
+test("displays alert for invalid pin count", () => {
   const mockSubmit = jest.fn();
+  global.alert = jest.fn(); // Mock alert
   render(<RollForm onSubmit={mockSubmit} />);
 
-  // Find the input and the submit button
   const input = screen.getByPlaceholderText(/enter pins/i);
   const button = screen.getByRole("button", { name: /record roll/i });
 
-  // Simulate typing into the input and clicking the button
-  fireEvent.change(input, { target: { value: "7" } });
+  fireEvent.change(input, { target: { value: "11" } }); // Invalid pin count
   fireEvent.click(button);
 
-  // Assert that the mock function was called with the correct value
-  expect(mockSubmit).toHaveBeenCalledWith("7");
+  // Assert that the alert is shown
+  expect(global.alert).toHaveBeenCalledWith(
+    "Please enter a valid number between 0 and 10."
+  );
+  expect(mockSubmit).not.toHaveBeenCalled();
 });

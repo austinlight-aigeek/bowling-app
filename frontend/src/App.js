@@ -22,6 +22,10 @@ function App() {
   };
 
   const handleRecordRoll = async (pins) => {
+    if (!gameId) {
+      setError("Please create a game first.");
+      return;
+    }
     try {
       await recordRoll(gameId, pins);
       const data = await getScore(gameId);

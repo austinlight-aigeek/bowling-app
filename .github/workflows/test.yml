@@ -85,26 +85,26 @@ jobs:
           pytest backend/tests/integration/test_endpoints.py
 
   # Placeholder for future frontend tests
-  # frontend_tests:
-  #   name: Frontend Tests
-  #   runs-on: ubuntu-latest
-  #   needs: backend_integration_tests # Run after backend tests
+  frontend_tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    needs: backend_integration_tests # Run after backend tests
 
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: "20" # Explicitly set to use Node.js 20
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20" # Explicitly set to use Node.js 20
 
-  #     - name: Install frontend dependencies
-  #       run: |
-  #         cd frontend
-  #         npm install
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
 
-  #     - name: Run Frontend Tests
-  #       run: |
-  #         echo "Running Frontend Tests..."
-  #         npm test
+      - name: Run Frontend Tests
+        run: |
+          echo "Running Frontend Tests..."
+          npm test
