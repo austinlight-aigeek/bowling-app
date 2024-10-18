@@ -1,13 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from app.models.game import Game, Roll, calculate_score
-import openai
+from openai import OpenAI
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 router = APIRouter()
-
 games = {}  # Store games in memory for simplicity
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 # POST /games - Create a new game
@@ -60,15 +59,30 @@ def get_summary(game_id: int, model: str = "gpt"):
 
 
 def get_gpt_summary(prompt: str):
-    print(f"OpenAI API Key: {openai.api_key}")  # Debugging line
     try:
-        response = openai.Completion.create(
-            engine="text-davinci-003", prompt=prompt, max_tokens=100
+        # Initialize OpenAI client with the API key
+        client = OpenAI(
+            api_key=os.environ.get("OPENAI_API_KEY"),
         )
-        summary = response.choices[0].text.strip()
+
+        # Call the chat completion API
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            model="gpt-4",  # Or "gpt-3.5-turbo"
+        )
+
+        # Extract and return the generated summary using dot notation
+        summary = chat_completion.choices[0].message.content.strip()
     except Exception as e:
-        print(f"Error: {e}")  # Debugging line
-        raise HTTPException(status_code=500, detail="Error generating GPT summary")
+        print(f"OpenAI API Error: {e}")  # Log detailed error message
+        raise HTTPException(
+            status_code=500, detail=f"Error generating GPT summary: {e}"
+        )
 
     return {"summary": summary}
 

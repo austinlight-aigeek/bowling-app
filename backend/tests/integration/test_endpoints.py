@@ -1,5 +1,3 @@
-# backend/tests/integration/test_endpoints.py
-
 from fastapi.testclient import TestClient
 from app.main import app
 
