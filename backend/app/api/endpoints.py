@@ -41,16 +41,42 @@ def get_score(game_id: int):
     return {"game_id": game_id, "score": score}
 
 
-# GET /games/{game_id}/summary - Get natural language summary
 @router.get("/games/{game_id}/summary")
-def get_summary(game_id: int):
+def get_summary(game_id: int, model: str = "gpt"):
     if game_id not in games:
         raise HTTPException(status_code=404, detail="Game not found")
 
     game = games[game_id]
-    prompt = f"Summarize the bowling game with rolls: {game.rolls}"
+    rolls_summary = f"Summarize the bowling game with rolls: {game.rolls}"
 
-    response = openai.Completion.create(engine="text-davinci-003", prompt=prompt, max_tokens=100)
-    summary = response.choices[0].text.strip()
+    # Depending on the model parameter, use either GPT or BERT
+    if model.lower() == "gpt":
+        return get_gpt_summary(rolls_summary)
+    elif model.lower() == "bert":
+        return get_bert_summary(rolls_summary)
+    else:
+        raise HTTPException(
+            status_code=400, detail="Invalid model type. Choose 'gpt' or 'bert'."
+        )
 
-    return {"game_id": game_id, "summary": summary}
+
+def get_gpt_summary(prompt: str):
+    try:
+        response = openai.Completion.create(
+            engine="text-davinci-003", prompt=prompt, max_tokens=100
+        )
+        summary = response.choices[0].text.strip()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Error generating GPT summary")
+
+    return {"summary": summary}
+
+
+def get_bert_summary(prompt: str):
+    # Here, you can use a BERT-based model from Hugging Face's transformers library.
+    from transformers import pipeline
+
+    summarizer = pipeline("summarization", model="bert-base-uncased")
+    summary = summarizer(prompt, max_length=50, min_length=25, do_sample=False)
+
+    return {"summary": summary[0]["summary_text"]}
