@@ -1,0 +1,25 @@
+services:
+  backend:
+    build: ./backend
+    container_name: bowling_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=production
+      - OPENAI_API_KEY=${OPENAI_API_KEY} # Load your OpenAI API key from .env
+    volumes:
+      - backend-data:/app
+    depends_on:
+      - frontend
+
+  frontend:
+    build: ./frontend
+    container_name: bowling_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - frontend-data:/app
+
+volumes:
+  backend-data:
+  frontend-data:

@@ -1,0 +1,28 @@
+bowling-app/
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── endpoints/
+│   │   │   └── __init__.py
+│   │   ├── core/
+│   │   │   └── config.py
+│   │   ├── models/
+│   │   └── main.py
+│   ├── tests/
+│   │   ├── unit/
+│   │   ├── integration/
+│   │   └── __init__.py
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── .env
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── App.js
+│   │   └── index.js
+│   ├── public/
+│   ├── Dockerfile
+│   └── package.json
+├── docker-compose.yml
+├── .gitignore
+└── README.md
