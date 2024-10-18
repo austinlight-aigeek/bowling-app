@@ -49,16 +49,16 @@ def get_summary(game_id: int, model: str = "gpt"):
 
     # Depending on the model parameter, use either GPT or BERT
     if model.lower() == "gpt":
-        return get_gpt_summary(rolls_summary)
+        return get_gpt_summary(game_id, game)
     elif model.lower() == "bert":
-        return get_bert_summary(rolls_summary)
+        return get_bert_summary(game_id, game)
     else:
         raise HTTPException(
             status_code=400, detail="Invalid model type. Choose 'gpt' or 'bert'."
         )
 
 
-def get_gpt_summary(prompt: str):
+def get_gpt_summary(game_id: int, game: Game):
     try:
         # Initialize OpenAI client with the API key
         client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -93,20 +93,25 @@ def get_gpt_summary(prompt: str):
     return {"summary": summary}
 
 
-def get_bert_summary(prompt: str):
+def get_bert_summary(game_id: int, game: Game):
     # Add prompt engineering to structure the input for BERT
     structured_prompt = (
-        f"Summarize the current state of the bowling game with ID {game_id}. "
-        f"The rolls in the game are: {game.rolls}. "
-        f"Highlight key events like strikes, spares, and overall game progress. "
-        f"Provide a concise summary focused on major game events and the current score."
+        f"BOWLING GAME ID {game_id}. Rolls: {game.rolls}. "
+        f"Key events: Any strikes? Any spares? What's the score? "
+        f"Summarize the game progress and focus on important rolls."
     )
 
     from transformers import pipeline
 
-    summarizer = pipeline("summarization", model="bert-base-uncased")
+    summarizer = pipeline("summarization", model="t5-small")
+
+    # Setting max_new_tokens to limit the additional generated tokens and prevent length issues
     summary = summarizer(
-        structured_prompt, max_length=50, min_length=25, do_sample=False
+        structured_prompt,
+        max_length=100,  # Increase max_length or adjust according to input
+        min_length=25,
+        max_new_tokens=50,  # Set max new tokens to avoid exceeding input length limits
+        do_sample=False,
     )
 
     return {"summary": summary[0]["summary_text"]}
