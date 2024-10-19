@@ -9,10 +9,11 @@ services:
     environment:
       - ENV=production
       - OPENAI_API_KEY=${OPENAI_API_KEY} # Ensure .env file exists with this key
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB} # Ensure connection to Postgres
     volumes:
-      - backend-data:/app
+      - ./backend:/app # Use relative path to mount the backend code
     depends_on:
-      - frontend
+      - postgres # Backend should depend on Postgres, not frontend
     networks:
       - bowling-net
 
@@ -21,14 +22,31 @@ services:
     container_name: bowling_frontend
     ports:
       - "3000:3000"
+    environment:
+      - REACT_APP_BACKEND_URL=http://backend:8000 # Ensure the frontend knows the backend service name
     volumes:
-      - frontend-data:/app
+      - ./frontend:/app # Use relative path to mount the frontend code
+    networks:
+      - bowling-net
+
+  postgres:
+    image: postgres:latest
+    container_name: bowling_postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER} # Ensure .env file exists with this key
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD} # Ensure .env file exists with this key
+      - POSTGRES_DB=${POSTGRES_DB} # Database name passed from environment variable
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     networks:
       - bowling-net
 
 volumes:
   backend-data:
   frontend-data:
+  postgres-data:
 
 networks:
   bowling-net:
