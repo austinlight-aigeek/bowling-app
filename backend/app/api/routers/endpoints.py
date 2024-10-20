@@ -11,34 +11,31 @@ router = APIRouter()
 
 
 class CreateGameRequest(BaseModel):
-    player_ids: list[str]  # Ensure it's a list of strings
+    player_name: str  # accept player_name to create a new player if they don't exist
 
 
 @router.post("/games")
 async def create_game(request: CreateGameRequest, db: Session = Depends(get_db)):
     """
-    Create a new bowling game with the given player IDs.
-
-    Args:
-        request: A request body containing a list of player IDs.
-        db: Database session dependency.
-
-    Returns:
-        JSON response with the game ID.
+    Create a new bowling game for a single player.
     """
-    # Fetch the players from the database based on provided player IDs
-    players = db.query(Player).filter(Player.id.in_(request.player_ids)).all()
+    # Check if the player exists in the database by their name
+    player = db.query(Player).filter(Player.name == request.player_name).first()
 
-    if not players:
-        raise HTTPException(status_code=404, detail="One or more players not found")
+    # If player does not exist, create a new player with the provided name
+    if not player:
+        player = Player(name=request.player_name)
+        db.add(player)
+        db.commit()
+        db.refresh(player)
 
-    # Create the game and associate the players with it
-    game = Game(players=players)
+    # Create the game for the existing or newly created player
+    game = Game(player_id=player.id)
     db.add(game)
     db.commit()
     db.refresh(game)
 
-    return {"game_id": game.id}
+    return {"game_id": game.id, "player_id": player.id, "player_name": player.name}
 
 
 @router.post("/games/{game_id}/rolls")

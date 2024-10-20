@@ -1,65 +1,21 @@
 import pytest
-from fastapi.testclient import TestClient
-from app.main import app
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-from app.db.base import Base, get_db
-
-# Use SQLite in-memory database for testing
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-# Dependency override for using testing database
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
-
-# Setup TestClient for FastAPI
-client = TestClient(app)
-
-
-# Use the same engine as the test client
-@pytest.fixture(scope="module")
-def setup_database():
-    """
-    Setup test database before running tests, and teardown after.
-    """
-    Base.metadata.create_all(bind=engine)  # Create the database schema
-    yield  # This is where the test runs
-    Base.metadata.drop_all(bind=engine)  # Drop the schema after tests are done
 
 
 @pytest.mark.usefixtures("setup_database")
-def test_create_game(setup_database):
+def test_create_game(client):
     """
     Test the API endpoint for creating a new game.
     """
-    # Insert test players into the database
-    with TestingSessionLocal() as db:
-        db.execute(
-            text(
-                "INSERT INTO players (id, name) VALUES ('player1', 'Player One'), ('player2', 'Player Two')"
-            )
-        )
-        db.commit()
-        db.flush()
-
-    # Correctly structured JSON payload for player_ids
-    response = client.post("/games", json={"player_ids": ["player1", "player2"]})
+    # Correctly structured JSON payload with player_name
+    response = client.post("/games", json={"player_name": "Player One"})
 
     assert response.status_code == 200
     assert "game_id" in response.json()
+    assert "player_id" in response.json()  # Check that the player_id is returned
+    assert response.json()["player_name"] == "Player One"
 
 
-def test_invalid_game_id():
+def test_invalid_game_id(client):
     """
     Test retrieving information for a game that doesn't exist.
     """
@@ -68,12 +24,13 @@ def test_invalid_game_id():
     assert response.json()["detail"] == "Game not found"
 
 
-def test_add_roll_to_game(setup_database):
+@pytest.mark.usefixtures("setup_database")
+def test_add_roll_to_game(client):
     """
     Test adding a roll to an existing game.
     """
     # First create a game
-    response = client.post("/games", json={"player_ids": ["player1", "player2"]})
+    response = client.post("/games", json={"player_name": "Player Two"})
     assert response.status_code == 200
     game_id = response.json()["game_id"]
 
@@ -83,12 +40,13 @@ def test_add_roll_to_game(setup_database):
     assert "current_score" in roll_response.json()
 
 
-def test_add_invalid_roll(setup_database):
+@pytest.mark.usefixtures("setup_database")
+def test_add_invalid_roll(client):
     """
     Test adding an invalid roll (more than 10 pins) to an existing game.
     """
     # First create a game
-    response = client.post("/games", json={"player_ids": ["player1", "player2"]})
+    response = client.post("/games", json={"player_name": "Player Three"})
     game_id = response.json()["game_id"]
 
     # Add an invalid roll
@@ -96,12 +54,13 @@ def test_add_invalid_roll(setup_database):
     assert roll_response.status_code == 422  # Unprocessable Entity (validation error)
 
 
-def test_get_score(setup_database):
+@pytest.mark.usefixtures("setup_database")
+def test_get_score(client):
     """
     Test retrieving the current score for a game.
     """
     # Create a game and add rolls
-    response = client.post("/games", json={"player_ids": ["player1", "player2"]})
+    response = client.post("/games", json={"player_name": "Player Four"})
     game_id = response.json()["game_id"]
     client.post(f"/games/{game_id}/rolls", json={"pins_knocked": 7})
     client.post(f"/games/{game_id}/rolls", json={"pins_knocked": 2})
@@ -112,7 +71,8 @@ def test_get_score(setup_database):
     assert score_response.json()["score"] == 9
 
 
-def test_get_summary_invalid_game(setup_database):
+@pytest.mark.usefixtures("setup_database")
+def test_get_summary_invalid_game(client):
     """
     Test getting a summary for a game that doesn't exist (edge case).
     """

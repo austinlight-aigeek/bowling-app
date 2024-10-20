@@ -9,29 +9,21 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 
-# Association table for many-to-many relationship between Player and Game
-player_game_association = Table(
-    'player_game',
-    Base.metadata,
-    Column('player_id', String, ForeignKey('players.id'), primary_key=True),
-    Column('game_id', String, ForeignKey('games.id'), primary_key=True),
-)
-
-
 class Player(Base):
     """
     Player model representing a player participating in bowling games.
 
     Attributes:
-        id: Unique identifier for the player.
+        id: Auto-incremented unique identifier for the player.
         name: Name of the player.
     """
 
     __tablename__ = "players"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
+    id = Column(
+        Integer, primary_key=True, index=True, autoincrement=True
+    )  # Auto-incremental ID
     name = Column(String, nullable=False)
-    games = relationship("Game", secondary=player_game_association, back_populates="players")
 
 
 class Game(Base):
@@ -41,14 +33,15 @@ class Game(Base):
     Attributes:
         id: Unique identifier for the game.
         current_frame: Index of the current active frame (0-9).
-        player_ids: List of player IDs participating in the game.
+        player_id: Foreign key to the Player table.
     """
 
     __tablename__ = "games"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     current_frame = Column(Integer, default=0)
-    players = relationship("Player", secondary=player_game_association, back_populates="games")
+    player_id = Column(Integer, ForeignKey("players.id"), nullable=False)
+    player = relationship("Player")
     frames = relationship("Frame", back_populates="game")
 
 
@@ -64,8 +57,10 @@ class Frame(Base):
 
     __tablename__ = "frames"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    game_id = Column(String, ForeignKey("games.id"), nullable=False)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    game_id = Column(
+        Integer, ForeignKey("games.id"), nullable=False
+    )  # Ensure this is an Integer
     rolls = relationship("Roll", back_populates="frame")
     game = relationship("Game", back_populates="frames")
 
@@ -82,7 +77,9 @@ class Roll(Base):
 
     __tablename__ = "rolls"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     pins_knocked = Column(Integer, nullable=False)
-    frame_id = Column(String, ForeignKey("frames.id"), nullable=False)
+    frame_id = Column(
+        Integer, ForeignKey("frames.id"), nullable=False
+    )  # Ensure this is an Integer
     frame = relationship("Frame", back_populates="rolls")

@@ -1,0 +1,49 @@
+bowling-app/
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── routers/
+│   │   │   │   └── endpoints.py
+│   │   ├── services/
+│   │   │   ├── game.py
+│   │   │   └── llm.py
+│   │   ├── core/
+│   │   │   └── config.py
+│   │   ├── db/
+│   │   │   ├── base.py
+│   │   │   ├── models.py
+│   │   │   └── schemas.py
+│   │   └── main.py
+│   ├── migrations/
+│   ├── tests/
+│   │   ├── unit/
+│   │   │   └── test_game_logic.py
+│   │   └── integration/
+│   │       └── test_endpoints.py
+│   ├── .env
+│   ├── .gitignore
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── test.db
+├── frontend/
+│   ├── node_modules/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── api.js
+│   │   ├── App.css
+│   │   ├── App.js
+│   │   ├── App.test.js
+│   │   ├── index.css
+│   │   ├── index.js
+│   │   └── setuptest.js
+│   ├── .env.development
+│   ├── .env.production
+│   ├── .gitignore
+│   ├── Dockerfile
+│   ├── jest.config.js
+│   └── package.json
+├── .env
+├── .gitignore
+├── docker-compose.yml
+└── Readme
