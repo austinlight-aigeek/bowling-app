@@ -46,23 +46,10 @@ class Game(Base):
 
     __tablename__ = "games"
 
-    id = Column(String, primary_key=True, index=True)
+    id = Column(String, primary_key=True, default=generate_uuid)
     current_frame = Column(Integer, default=0)
-
-    # PostgreSQL native array (for production)
-    # player_ids = Column(ARRAY(String), nullable=False)
-
-    # If using SQLite (for testing), you can store the player IDs as a comma-separated string
-    player_ids = Column(String, nullable=False)
-
-    # Method to convert player_ids from string to list (for SQLite)
-    @property
-    def player_ids_list(self):
-        return self.player_ids.split(",") if self.player_ids else []
-
-    @player_ids_list.setter
-    def player_ids_list(self, value):
-        self.player_ids = ",".join(value)
+    players = relationship("Player", secondary=player_game_association, back_populates="games")
+    frames = relationship("Frame", back_populates="game")
 
 
 class Frame(Base):
