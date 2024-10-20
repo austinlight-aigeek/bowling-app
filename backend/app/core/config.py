@@ -34,27 +34,3 @@ class Settings:
 
 
 settings = Settings()
-
-# Create the SQLAlchemy engine
-engine = create_engine(settings.DATABASE_URL)
-
-# Create a configured "Session" class
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-# Dependency for getting the database session
-def get_db():
-    """
-    Dependency to get a SQLAlchemy database session.
-    This function is used in FastAPI endpoints to ensure that
-    each request gets a fresh database session, and that session
-    is properly closed after the request is handled.
-
-    Yields:
-        db (Session): SQLAlchemy session for database operations.
-    """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()

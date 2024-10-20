@@ -10,9 +10,6 @@ SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Setup TestClient for FastAPI
-client = TestClient(app)
-
 
 # Dependency override for using testing database
 def override_get_db():
@@ -25,6 +22,9 @@ def override_get_db():
 
 app.dependency_overrides[get_db] = override_get_db
 
+# Setup TestClient for FastAPI
+client = TestClient(app)
+
 
 # Use the same engine as the test client
 @pytest.fixture(scope="module")
@@ -32,10 +32,8 @@ def setup_database():
     """
     Setup test database before running tests, and teardown after.
     """
-    print("Creating database schema...")
     Base.metadata.create_all(bind=engine)  # Create the database schema
     yield  # This is where the test runs
-    print("Tearing down database schema...")
     Base.metadata.drop_all(bind=engine)  # Drop the schema after tests are done
 
 

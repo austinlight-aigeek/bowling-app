@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from app.core.config import get_db
+from app.db.base import get_db
 from app.db.models import Game, Player, Roll
 from app.api.services.game import BowlingGame
 from app.db.schemas import RollRequest
