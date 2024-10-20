@@ -26,19 +26,25 @@ async def create_game(request: CreateGameRequest, db: Session = Depends(get_db))
     Returns:
         JSON response with the game ID.
     """
-    # If using PostgreSQL: You can directly store the list
-    # game = Game(player_ids=request.player_ids)
+    # Fetch the players from the database based on provided player IDs
+    players = db.query(Player).filter(Player.id.in_(request.player_ids)).all()
 
-    # If using SQLite: Convert the list to a comma-separated string
-    game = Game(player_ids=",".join(request.player_ids))
+    if not players:
+        raise HTTPException(status_code=404, detail="One or more players not found")
 
+    # Create the game and associate the players with it
+    game = Game(players=players)
     db.add(game)
     db.commit()
+    db.refresh(game)
+
     return {"game_id": game.id}
 
 
 @router.post("/games/{game_id}/rolls")
-async def record_roll(game_id: str, request: RollRequest, db: Session = Depends(get_db)):
+async def record_roll(
+    game_id: str, request: RollRequest, db: Session = Depends(get_db)
+):
     """
     Record a roll for the given game ID. Updates the frame and calculates the score.
     Args:

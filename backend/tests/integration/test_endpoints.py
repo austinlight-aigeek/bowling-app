@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.db.base import Base, get_db
 
@@ -26,22 +26,37 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 
+# Use the same engine as the test client
 @pytest.fixture(scope="module")
 def setup_database():
     """
     Setup test database before running tests, and teardown after.
     """
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
+    print("Creating database schema...")
+    Base.metadata.create_all(bind=engine)  # Create the database schema
+    yield  # This is where the test runs
+    print("Tearing down database schema...")
+    Base.metadata.drop_all(bind=engine)  # Drop the schema after tests are done
 
 
+@pytest.mark.usefixtures("setup_database")
 def test_create_game(setup_database):
     """
     Test the API endpoint for creating a new game.
     """
+    # Insert test players into the database
+    with TestingSessionLocal() as db:
+        db.execute(
+            text(
+                "INSERT INTO players (id, name) VALUES ('player1', 'Player One'), ('player2', 'Player Two')"
+            )
+        )
+        db.commit()
+        db.flush()
+
     # Correctly structured JSON payload for player_ids
     response = client.post("/games", json={"player_ids": ["player1", "player2"]})
+
     assert response.status_code == 200
     assert "game_id" in response.json()
 
