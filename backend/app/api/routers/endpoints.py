@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.db.base import get_db
-from app.db.models import Game, Player, Roll
+from app.db.models import Game, Player
 from app.api.services.game import BowlingGame
 from app.db.schemas import RollRequest
 from app.api.services.llm import get_llm_summary

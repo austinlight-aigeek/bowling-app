@@ -1,4 +1,4 @@
-from app.db.models import Roll, Game, Frame
+from app.db.models import Roll, Frame
 
 
 class BowlingGame:
@@ -44,13 +44,17 @@ class BowlingGame:
             ValueError: If the number of pins is invalid or if the frame exceeds its limit.
         """
         if pins_knocked > 10 or pins_knocked < 0:
-            raise ValueError("Invalid roll: Number of pins knocked down must be between 0 and 10.")
+            raise ValueError(
+                "Invalid roll: Number of pins knocked down must be between 0 and 10."
+            )
 
         current_frame = self._get_current_frame()
         current_rolls = current_frame.rolls
 
         # Debug print to see the current frame and roll count
-        print(f"Adding roll to frame {self.current_frame}, current rolls: {len(current_rolls)}")
+        print(
+            f"Adding roll to frame {self.current_frame}, current rolls: {len(current_rolls)}"
+        )
 
         # Ensure that no more than two rolls can be added to frames 1-9
         if len(current_rolls) >= 2 and self.current_frame < 9:
@@ -58,17 +62,26 @@ class BowlingGame:
 
         # Handle 10th frame differently (allowing extra rolls for strike/spare)
         if self.current_frame == 9:
-            if len(current_rolls) == 2 and sum(roll.pins_knocked for roll in current_rolls) >= 10:
+            if (
+                len(current_rolls) == 2
+                and sum(roll.pins_knocked for roll in current_rolls) >= 10
+            ):
                 pass  # Allow extra roll in the 10th frame if strike or spare
             elif len(current_rolls) >= 2:
-                raise ValueError("No more rolls allowed in the 10th frame unless it's a spare or strike.")
+                raise ValueError(
+                    "No more rolls allowed in the 10th frame unless it's a spare or strike."
+                )
 
         # Add the roll to the current frame
         roll = Roll(pins_knocked=pins_knocked, frame_id=current_frame.id)
         current_frame.rolls.append(roll)
 
         # Automatically advance to the next frame if needed
-        if len(current_rolls) == 1 and current_rolls[0].pins_knocked == 10 and self.current_frame < 9:
+        if (
+            len(current_rolls) == 1
+            and current_rolls[0].pins_knocked == 10
+            and self.current_frame < 9
+        ):
             self.current_frame += 1
         elif len(current_rolls) == 2 and self.current_frame < 9:
             self.current_frame += 1
@@ -92,7 +105,11 @@ class BowlingGame:
                 frame_score += self._get_next_two_rolls(i)
 
             # Handle spare
-            if len(frame.rolls) == 2 and sum(roll.pins_knocked for roll in frame.rolls) == 10 and i < 9:
+            if (
+                len(frame.rolls) == 2
+                and sum(roll.pins_knocked for roll in frame.rolls) == 10
+                and i < 9
+            ):
                 frame_score += self._get_next_roll(i)
 
             total_score += frame_score
@@ -116,7 +133,9 @@ class BowlingGame:
             if len(next_frame.rolls) > 1:
                 next_two_rolls += next_frame.rolls[1].pins_knocked
             elif frame_index + 2 < len(self.game.frames):
-                next_two_rolls += self.game.frames[frame_index + 2].rolls[0].pins_knocked
+                next_two_rolls += (
+                    self.game.frames[frame_index + 2].rolls[0].pins_knocked
+                )
         return next_two_rolls
 
     def _get_next_roll(self, frame_index):
@@ -171,7 +190,10 @@ class BowlingGame:
         Returns:
             bool: True if the frame is a spare, False otherwise.
         """
-        return len(frame.rolls) == 2 and sum(roll.pins_knocked for roll in frame.rolls) == 10
+        return (
+            len(frame.rolls) == 2
+            and sum(roll.pins_knocked for roll in frame.rolls) == 10
+        )
 
     def _frame_score(self, frame) -> int:
         """
