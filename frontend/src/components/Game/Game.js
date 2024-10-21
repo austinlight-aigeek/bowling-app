@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import React from "react";
 import Scorecard from "../Scorecard/Scorecard";
 import Controls from "../Controls/Controls";
 import GameInfo from "../GameInfo/GameInfo";
