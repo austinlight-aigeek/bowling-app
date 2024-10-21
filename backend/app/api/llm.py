@@ -1,127 +1,105 @@
-import openai
-from transformers import pipeline
-from langchain.chains import LLMChain
-from langchain_openai import ChatOpenAI
-from langchain import OpenAI
+from openai import OpenAI
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../../.env"))
+
+# Access the OPENAI_API_KEY environment variable
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
 def get_llm_summary(frames, model: str = "gpt"):
     """
-    Generate a summary for the bowling game using the specified LLM model.
+    Generate a summary of the current bowling game using OpenAI's GPT-4 model.
 
     Args:
-        frames (list): A list of frames with rolls for the game.
-        model (str): The LLM model to use ('gpt', 'bert', 't5', 'llama').
+        frames (dict): Dictionary containing frame data.
 
     Returns:
-        str: A natural language summary of the game.
+        str: A generated summary of the current game status.
+    """
+    # Extract useful data from the frames
+    game_data = extract_game_data(frames)
+
+    # Prepare the prompt for GPT-4
+    prompt = f"""
+    You are a bowling expert, and you are summarizing the current bowling game status.
+    
+    The game consists of the following frames: {frames}.
+    
+    Total score: {game_data['total_score']}.
+    Number of strikes: {game_data['strikes']}.
+    Number of spares: {game_data['spares']}.
+    Number of open frames: {game_data['open_frames']}.
+    
+    Please provide a clear and short summary of the game so far, highlighting key moments such as strikes, spares, and any notable trends in the game.
     """
 
-    # Initialize the LLM
-    llm = OpenAI(model="gpt-4")
+    if model == "gpt":
+        client = OpenAI(api_key=OPENAI_API_KEY)
 
-    # Prepare the input data for summarization
-    frame_descriptions = []
-    for frame_num, rolls in frames.items():
-        if len(rolls) == 1:
-            frame_descriptions.append(
-                f"Frame {frame_num}: Strike ({rolls[0]} pins knocked down)"
-            )
-        elif sum(rolls) == 10:
-            frame_descriptions.append(
-                f"Frame {frame_num}: Spare ({rolls[0]} + {rolls[1]} pins knocked down)"
-            )
-        else:
-            frame_descriptions.append(
-                f"Frame {frame_num}: Open Frame ({rolls[0]} + {rolls[1]} pins knocked down)"
-            )
-
-    # Create a prompt for summarization
-    prompt = (
-        f"The bowling game consists of the following frames:\n"
-        + "\n".join(frame_descriptions)
-        + "\nProvide a summary of the game performance."
-    )
-
-    # Generate summary using LLM
-    summary = llm(prompt)
-
-    return summary
-
-
-def _gpt_summary(prompt):
-    """
-    Generate a summary using GPT (OpenAI).
-
-    Args:
-        prompt (str): The prompt containing the bowling game summary instructions.
-
-    Returns:
-        str: The GPT-generated summary.
-    """
-    try:
-        response = openai.Completion.create(
-            engine="gpt-4",  # or gpt-3.5-turbo, depending on your setup
-            prompt=prompt,
-            max_tokens=150,  # Limit token usage
-            temperature=0.7,  # Control creativity
+        response = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            model="gpt-4o",
         )
-        return response.choices[0].text.strip()
-    except Exception as e:
-        return f"Failed to generate summary with GPT: {str(e)}"
+
+        # Extract and return the generated summary from the response
+        return response.choices[0].message.content
+
+    elif model == "bert":
+        # Placeholder for BERT-based summarization
+        return "Sorry, summarization with BERT hasn't been implemented yet."
+
+    elif model == "t5":
+        # Placeholder for T5-based summarization
+        return "Sorry, summarization with T5 hasn't been implemented yet."
+
+    elif model == "llama":
+        # Placeholder for LLaMA-based summarization
+        return "Sorry, summarization with LLaMA hasn't been implemented yet."
+
+    else:
+        # If the model is unknown, return an error message
+        return "Sorry, the selected model is not supported."
 
 
-def _bert_summary(prompt):
+def extract_game_data(frames):
     """
-    Generate a summary using BERT (Hugging Face transformers).
+    Extracts valuable scores and statistics from the frames.
 
     Args:
-        prompt (str): The prompt containing the bowling game summary instructions.
+        frames (dict): Dictionary containing frame data.
 
     Returns:
-        str: The BERT-generated summary.
+        dict: A dictionary containing total score, number of strikes, number of spares, and number of open frames.
     """
+    total_score = 0
+    strikes = 0
+    spares = 0
+    open_frames = 0
 
-    try:
-        summarizer = pipeline("summarization", model="bert-base-uncased")
-        summary = summarizer(prompt, max_new_tokens=100)
-        return summary[0]["summary_text"]
-    except Exception as e:
-        return f"Failed to generate summary with BERT: {str(e)}"
+    for frame, rolls in frames.items():
+        # Calculate score for each frame
+        frame_score = sum(rolls)
+        total_score += frame_score
 
+        # Check for strike or spare
+        if len(rolls) == 1 and rolls[0] == 10:
+            strikes += 1
+        elif len(rolls) == 2 and sum(rolls) == 10:
+            spares += 1
+        else:
+            open_frames += 1
 
-def _t5_summary(prompt):
-    """
-    Generate a summary using T5 (Hugging Face transformers).
-
-    Args:
-        prompt (str): The prompt containing the bowling game summary instructions.
-
-    Returns:
-        str: The T5-generated summary.
-    """
-    try:
-        summarizer = pipeline("summarization", model="t5-small")
-        summary = summarizer(prompt, max_length=100, min_length=30)
-        return summary[0]["summary_text"]
-    except Exception as e:
-        return f"Failed to generate summary with T5: {str(e)}"
-
-
-def _llama_summary(prompt):
-    """
-    Generate a summary using LLaMA (custom model, placeholder).
-
-    Args:
-        prompt (str): The prompt containing the bowling game summary instructions.
-
-    Returns:
-        str: The LLaMA-generated summary (currently a placeholder).
-    """
-    # Placeholder logic for LLaMA model integration
-    try:
-        # If you have a local LLaMA model, you can integrate it here.
-        # For now, returning a placeholder.
-        return f"LLaMA summary for the following game: {prompt}"
-    except Exception as e:
-        return f"Failed to generate summary with LLaMA: {str(e)}"
+    return {
+        "total_score": total_score,
+        "strikes": strikes,
+        "spares": spares,
+        "open_frames": open_frames,
+    }
