@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 import { useSelector } from "react-redux";
-import { getScore } from "../../api";
 import "./Scorecard.css";
 
 const Scorecard = () => {

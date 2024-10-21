@@ -45,13 +45,40 @@ export const getScore = async (gameId) => {
   }
 };
 
-// Function to get a summary of the game using LLM
-export const getSummary = async (gameId) => {
+// Function to get the statistical data with player name
+export const getStatistics = async (player) => {
   try {
-    const response = await api.get(`/games/${gameId}/summary`);
-    return response.data; // Return the game summary
+    const response = await api.get(`/players/${player}/statistics`);
+    return response.data; // Return the current score
   } catch (error) {
-    console.error("Error fetching summary:", error);
+    console.error("Error fetching statistics:", error);
     throw error;
+  }
+};
+
+// Fetch the player's historical game data
+export const getPlayerHistory = async (playerName) => {
+  try {
+    // Call the API to get the player's history
+    const response = await api.get(`/players/${playerName}/history`);
+
+    // Return the list of games (including score, strikes, spares, and start time)
+    return response.data.games;
+  } catch (error) {
+    console.error("Error fetching player history:", error);
+    throw error;
+  }
+};
+
+// Function to get a summary of the game using LLM
+export const getSummary = async (gameId, llm) => {
+  try {
+    const response = await api.get(`/games/${gameId}/summary`, {
+      params: { llm }, // Pass the LLM as a query parameter
+    });
+    return response.data.summary; // Return the summary from the response
+  } catch (error) {
+    console.error("Error fetching game summary:", error);
+    throw error; // Rethrow the error to handle it in the component
   }
 };

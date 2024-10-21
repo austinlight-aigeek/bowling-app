@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { actions } from "../../store/reducer";
-import "./Controls.css";
 import { recordFrames, getScore } from "../../api";
+
+import "./Controls.css";
 
 const Controls = () => {
   const { gameId, gameOver, pins, rolls, frames } = useSelector(
@@ -59,11 +60,9 @@ const Controls = () => {
           </button>
         ))}
       </div>
-      {rolls > 0 && (
-        <button className="Restart" onClick={handleRestart}>
-          Restart
-        </button>
-      )}
+      <button className="control-button" onClick={handleRestart}>
+        Restart
+      </button>
     </div>
   );
 };

@@ -9,11 +9,11 @@ import {
 
 // Action types
 const types = {
-  enterScore: "Game/EnterScore",
-  setScore: "Game/SetScore",
-  restart: "Game/Restart",
-  startGame: "Game/StartGame",
-  resetGame: "Game/ResetGame",
+  enterScore: "ENTER_SCORE",
+  setScore: "SET_SCORE",
+  restart: "RESTART",
+  startGame: "START_GAME",
+  resetGame: "RESET_GAME",
 };
 
 // Action creators

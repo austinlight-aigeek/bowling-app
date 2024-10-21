@@ -10,8 +10,6 @@ const root = createRoot(container);
 
 root.render(
   <Provider store={store}>
-    {" "}
-    {/* Wrap your App with Provider */}
     <App />
   </Provider>
 );

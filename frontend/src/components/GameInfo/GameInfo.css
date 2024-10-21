@@ -1,0 +1,22 @@
+.game-info-head {
+  display: flex;
+  align-items: center;
+}
+
+.game-info-head > :first-child {
+  flex-basis: 10%;
+  text-align: right;
+  margin-right: 10px;
+}
+
+.game-info-head button {
+  background-color: #ababe6;
+  color: black;
+  border-radius: 5px;
+  border-width: 1px;
+  height: 36px;
+}
+
+.game-info-content {
+  padding: 0 50px;
+}

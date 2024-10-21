@@ -1,27 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Game from "./components/Game/Game";
 import { useSelector, useDispatch } from "react-redux";
 import { actions } from "./store/reducer";
 import { createGame } from "./api";
+import "./App.css";
 
 const App = () => {
   const { gameId } = useSelector((state) => state);
-  const [name, setName] = useState("");
+  const [player, setPlayer] = useState("");
 
   const dispatch = useDispatch();
 
-  const onNameChange = (name) => {
-    setName(name);
+  const onPlayerChange = (name) => {
+    setPlayer(name);
   };
 
   const handleNewGame = async () => {
     try {
-      const game = await createGame(name);
-      console.log(game);
+      const game = await createGame(player);
       dispatch(
         actions.startGame({
           gameId: game.id,
-          playerName: name,
+          playerName: player,
         })
       );
     } catch (error) {
@@ -32,17 +32,18 @@ const App = () => {
   return (
     <div className="App">
       <header className="App-header">
-        <h1 className="Title">Bowling</h1>
+        <h1 className="title">Bowling Game</h1>
       </header>
       {gameId ? (
         <Game />
       ) : (
         <div>
           <input
+            className="player"
             type="text"
             placeholder="Enter player name"
-            value={name}
-            onChange={(e) => onNameChange(e.target.value)}
+            value={player}
+            onChange={(e) => onPlayerChange(e.target.value)}
           />
           <button onClick={handleNewGame}>Start Game</button>
         </div>
