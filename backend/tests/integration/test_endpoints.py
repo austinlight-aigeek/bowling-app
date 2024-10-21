@@ -1,136 +1,281 @@
 import pytest
-
-# Docstring for the module
-"""
-This module contains integration tests for the bowling game API endpoints.
-It tests the creation of games, recording of rolls, and retrieving the score via API requests.
-"""
+from fastapi.testclient import TestClient
+from app.db import models
+from sqlalchemy.orm import Session
 
 
-def test_create_game(client):
+def test_create_game(client: TestClient):
     """
-    Test the POST /games endpoint to ensure a new game is created successfully.
+    Test creating a new bowling game.
 
-    Args:
-        client (TestClient): The FastAPI test client fixture for making API requests.
+    This test ensures that a game can be created with a valid player name.
     """
-    # Make a POST request to create a new game
-    response = client.post("/games", json={"player": "Test Player"})
+    # Arrange
+    data = {"player": "John Doe"}
 
-    # Verify that the response is successful and contains the game ID
+    # Act
+    response = client.post("/games", json=data)
+
+    # Assert
     assert response.status_code == 200
-    data = response.json()
-    assert "id" in data
+    response_json = response.json()
+    assert response_json["player"] == "John Doe"
+    assert "id" in response_json  # Ensure the game ID is returned
 
 
-def test_record_roll(client):
+def test_create_game_missing_player(client: TestClient):
     """
-    Test the POST /games/{game_id}/rolls endpoint to ensure a roll is recorded correctly.
+    Test creating a new game without providing a player name.
 
-    Args:
-        client (TestClient): The FastAPI test client fixture for making API requests.
+    This should return a 422 Unprocessable Entity status as the player name is required.
     """
-    # First, create a new game
-    game_response = client.post("/games", json={"player": "Test Player"})
-    game_id = game_response.json()["id"]
+    # Act
+    response = client.post("/games", json={})
 
-    # Record a roll in the created game
-    roll_response = client.post(f"/games/{game_id}/rolls", json={"pins": 7})
-
-    # Verify that the roll is successfully recorded
-    assert roll_response.status_code == 200
-    assert roll_response.json() == {"message": "Roll recorded"}
+    # Assert
+    assert response.status_code == 422  # Missing required field (player name)
 
 
-def test_get_score(client):
+def test_record_roll_valid(client: TestClient, db: Session):
     """
-    Test the GET /games/{game_id}/score endpoint to ensure the correct score is returned.
+    Test recording valid rolls for a specific game.
 
-    Args:
-        client (TestClient): The FastAPI test client fixture for making API requests.
+    This test ensures that rolls can be recorded and updated for a valid game.
     """
-    # First, create a new game and record rolls
-    game_response = client.post("/games", json={"player": "Test Player"})
-    game_id = game_response.json()["id"]
+    # Arrange
+    game = models.Game(player="Test Player")
+    db.add(game)
+    db.commit()
+    db.refresh(game)
 
-    # Record some rolls
-    client.post(f"/games/{game_id}/rolls", json={"pins": 7})
-    client.post(f"/games/{game_id}/rolls", json={"pins": 2})
+    data = {
+        "frames": [[7, 3], [10], [6, 2]]
+    }  # Frame 1: Spare, Frame 2: Strike, Frame 3: Open frame
 
-    # Get the score for the game
-    score_response = client.get(f"/games/{game_id}/score")
+    # Act
+    response = client.post(f"/games/{game.id}/rolls", json=data)
 
-    # Verify the score is calculated correctly (7 + 2 = 9)
-    assert score_response.status_code == 200
-    assert score_response.json()["score"] == 9
-
-
-# tests/integration/test_endpoints_edge_cases.py
-import pytest
+    # Assert
+    assert response.status_code == 200
+    assert response.json() == "Rolls recorded successfully."
 
 
-# Test for perfect game
-def test_perfect_game_api(client):
+def test_record_roll_invalid_game_id(client: TestClient):
     """
-    Test creating a perfect game via the API (12 strikes, score of 300).
+    Test recording rolls for an invalid game ID.
+
+    This should return a 404 error because the game does not exist.
     """
-    response = client.post("/games", json={"player": "Perfect Player"})
-    game_id = response.json()["id"]
+    # Arrange
+    invalid_game_id = 99999
+    data = {"frames": [[7, 3], [10], [6, 2]]}
 
-    # Simulate 12 strikes
-    for _ in range(12):
-        client.post(f"/games/{game_id}/rolls", json={"pins": 10})
+    # Act
+    response = client.post(f"/games/{invalid_game_id}/rolls", json=data)
 
-    score_response = client.get(f"/games/{game_id}/score")
-    assert score_response.status_code == 200
-    assert score_response.json()["score"] == 300
+    # Assert
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Game not found"
 
 
-# Test for gutter game
-def test_gutter_game_api(client):
+def test_get_score_strike_spare_open_frame(client: TestClient, db: Session):
     """
-    Test creating a gutter game via the API (0 pins on every roll, score of 0).
+    Test calculating the score with a combination of strike, spare, and open frame.
+
+    - Frame 1: Strike (10 points + next two rolls)
+    - Frame 2: Spare (5 + 5 points + next roll)
+    - Frame 3: Open frame (4 + 3 points)
+    Expected total score: 41
     """
-    response = client.post("/games", json={"player": "Gutter Player"})
-    game_id = response.json()["id"]
+    # Arrange
+    game = models.Game(player="Test Player")
+    db.add(game)
+    db.commit()
+    db.refresh(game)
 
-    # Simulate gutter game
-    for _ in range(10):
-        client.post(f"/games/{game_id}/rolls", json={"pins": 0})
-        client.post(f"/games/{game_id}/rolls", json={"pins": 0})
+    frames = [
+        [10],
+        [5, 5],
+        [4, 3],
+    ]  # Strike (frame 1)  # Spare (frame 2)  # Open frame (frame 3)
 
-    score_response = client.get(f"/games/{game_id}/score")
-    assert score_response.status_code == 200
-    assert score_response.json()["score"] == 0
+    # Record the rolls
+    for i, frame_rolls in enumerate(frames):
+        frame = models.Frame(game_id=game.id, frame_number=i + 1, rolls=frame_rolls)
+        db.add(frame)
+    db.commit()
+
+    # Act
+    response = client.get(f"/games/{game.id}/score")
+
+    # Assert
+    # Score calculation: 20 (frame 1) + 14 (frame 2) + 7 (frame 3) = 41
+    assert response.status_code == 200
+    assert response.json()["score"] == 41
 
 
-# Test for spare calculation
-def test_spare_game_api(client):
+def test_get_score_tenth_frame_strike(client: TestClient, db: Session):
     """
-    Test spare calculation via the API (spare followed by a regular roll).
+    Test calculating the score with strikes in all frames, including the 10th frame.
+
+    In the 10th frame, the player gets two bonus rolls after a strike.
+    This should result in a perfect game with a score of 300.
     """
-    response = client.post("/games", json={"player": "Spare Player"})
-    game_id = response.json()["id"]
+    # Arrange
+    game = models.Game(player="Test Player")
+    db.add(game)
+    db.commit()
+    db.refresh(game)
 
-    # Simulate a spare and a regular roll
-    client.post(f"/games/{game_id}/rolls", json={"pins": 5})
-    client.post(f"/games/{game_id}/rolls", json={"pins": 5})  # Spare
-    client.post(f"/games/{game_id}/rolls", json={"pins": 3})
+    # All strikes, including 10th frame with two bonus rolls
+    frames = [
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10, 10, 10],  # 10th frame: Strike + two bonus rolls
+    ]
 
-    score_response = client.get(f"/games/{game_id}/score")
-    assert score_response.status_code == 200
-    assert score_response.json()["score"] == 16  # (5 + 5 + 3) + 3 = 16
+    # Record the rolls
+    for i, frame_rolls in enumerate(frames):
+        frame = models.Frame(game_id=game.id, frame_number=i + 1, rolls=frame_rolls)
+        db.add(frame)
+    db.commit()
+
+    # Act
+    response = client.get(f"/games/{game.id}/score")
+
+    # Assert
+    # Perfect game score = 300
+    assert response.status_code == 200
+    assert response.json()["score"] == 300
 
 
-# Test for invalid roll API request
-def test_invalid_roll_api(client):
+def test_get_score_tenth_frame_spare(client: TestClient, db: Session):
     """
-    Test that invalid rolls (negative or too many pins) return the appropriate error.
-    """
-    response = client.post("/games", json={"player": "Invalid Player"})
-    game_id = response.json()["id"]
+    Test calculating the score with spares and strikes, including a spare in the 10th frame.
 
-    # Attempt to send an invalid roll
-    roll_response = client.post(f"/games/{game_id}/rolls", json={"pins": -1})
-    assert roll_response.status_code == 400
-    assert "invalid roll" in roll_response.json()["detail"].lower()
+    In the 10th frame, the player gets one bonus roll after a spare.
+    Expected total score: 275.
+    """
+    # Arrange
+    game = models.Game(player="Test Player")
+    db.add(game)
+    db.commit()
+    db.refresh(game)
+
+    # Strikes in frames 1-9, spare in 10th frame with one bonus roll
+    frames = [
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [5, 5, 10],
+    ]  # 10th frame: Spare + one bonus roll
+
+    # Record the rolls
+    for i, frame_rolls in enumerate(frames):
+        frame = models.Frame(game_id=game.id, frame_number=i + 1, rolls=frame_rolls)
+        db.add(frame)
+    db.commit()
+
+    # Act
+    response = client.get(f"/games/{game.id}/score")
+
+    # Assert
+    # Total score = 275
+    assert response.status_code == 200
+    assert response.json()["score"] == 275
+
+
+def test_get_score_tenth_frame_open(client: TestClient, db: Session):
+    """
+    Test calculating the score when the player has an open frame in the 10th frame.
+
+    The player does not get bonus rolls if they don't knock all pins down in the 10th frame.
+    Expected total score: 267.
+    """
+    # Arrange
+    game = models.Game(player="Test Player")
+    db.add(game)
+    db.commit()
+    db.refresh(game)
+
+    # Strikes in frames 1-9, open frame in 10th
+    frames = [
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [10],
+        [4, 3],
+    ]  # 10th frame: Open frame
+
+    # Record the rolls
+    for i, frame_rolls in enumerate(frames):
+        frame = models.Frame(game_id=game.id, frame_number=i + 1, rolls=frame_rolls)
+        db.add(frame)
+    db.commit()
+
+    # Act
+    response = client.get(f"/games/{game.id}/score")
+
+    # Assert
+    # Total score = 267
+    assert response.status_code == 200
+    assert response.json()["score"] == 267
+
+
+def test_get_summary_valid(client: TestClient, mocker):
+    """
+    Test generating a natural language summary of the game using an LLM.
+
+    This test mocks the LLM to ensure the summary is generated correctly and returned via the summary endpoint.
+    """
+    # Mock the LLM summary generation
+    mocker.patch("app.api.llm.get_llm_summary", return_value="Test summary")
+
+    # Arrange
+    game = models.Game(player="Test Player")
+    db.add(game)
+    db.commit()
+    db.refresh(game)
+
+    frame = models.Frame(game_id=game.id, frame_number=1, rolls=[5, 4])
+    db.add(frame)
+    db.commit()
+
+    # Act
+    response = client.get(f"/games/{game.id}/summary")
+
+    # Assert
+    assert response.status_code == 200
+    assert response.json()["summary"] == "Test summary"
+
+
+def test_get_summary_invalid_game_id(client: TestClient):
+    """
+    Test generating a game summary for a non-existent game.
+
+    This should return a 404 error since the game ID does not exist.
+    """
+    # Act
+    response = client.get(f"/games/99999/summary")
+
+    # Assert
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Game not found"

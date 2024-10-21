@@ -1,55 +1,61 @@
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 from app.main import app
-from app.db.models import Base
-from app.db.base import engine, SessionLocal
+from app.db.base import Base, get_db
+from app.db.models import Game, Frame
 
-"""
-This module contains the fixture configurations for testing the FastAPI bowling game API.
-It sets up a test client, the test database, and database sessions for unit and integration tests.
-"""
+# Path to the test database
+SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"
 
+# Create an engine and session for the test database
+engine = create_engine(
+    SQLALCHEMY_TEST_DATABASE_URL, connect_args={"check_same_thread": False}
+)
 
-# Fixture to create a TestClient for testing the FastAPI app
-@pytest.fixture(scope="module")
-def client():
-    """
-    Creates a new FastAPI test client to interact with the API during tests.
-
-    Yields:
-        TestClient: An instance of FastAPI's TestClient for making API calls.
-    """
-    with TestClient(app) as c:
-        yield c
+# Create a session factory
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-# Fixture to set up and tear down the test database
-@pytest.fixture(scope="module")
-def setup_db():
-    """
-    Sets up the database for the entire test module and ensures the tables are created.
-    Tears down the database (drops all tables) after the test module completes.
-    """
-    # Create all tables before tests
-    Base.metadata.create_all(bind=engine)
-    # Provide setup functionality
-    yield
-    # Drop all tables after tests
-    Base.metadata.drop_all(bind=engine)
-
-
-# Fixture to provide a new session for each test function
 @pytest.fixture(scope="function")
-def db_session():
+def db():
     """
-    Provides a new database session for each individual test.
+    Create a new database session for a test.
 
-    Yields:
-        Session: A SQLAlchemy session object for interacting with the database during tests.
+    This fixture will create a new session for every test and roll back any changes after the test is done.
     """
-    session = SessionLocal()
+    # Ensure all tables are created before starting the test
+    Base.metadata.create_all(bind=engine)
+    db = TestingSessionLocal()
+
     try:
-        yield session
+        yield db
     finally:
-        # Close the session after each test
-        session.close()
+        # Rollback any changes and close the session after each test
+        db.rollback()
+        db.close()
+        # Drop all tables after the test to start fresh for each test
+        Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture(scope="function")
+def client(db):
+    """
+    Create a new FastAPI test client with the test database.
+
+    This fixture overrides the FastAPI dependency on the real database with the test database.
+    """
+
+    # Override the FastAPI dependency for `get_db` to use the test session
+    def override_get_db():
+        try:
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    # Create a TestClient for sending HTTP requests in tests
+    with TestClient(app) as test_client:
+        yield test_client
