@@ -60,7 +60,6 @@ mpmath==1.3.0
 multidict==6.0.5
 mypy-extensions==1.0.0
 networkx==3.3
-nlp-topic-builder @ file:///D:/Workspace/1_ML/%40WGU/topic-builder-dev
 nltk==3.9.1
 nodeenv==1.9.1
 numpy==1.26.4
