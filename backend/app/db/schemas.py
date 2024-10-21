@@ -1,6 +1,22 @@
-from pydantic import BaseModel, conint
+from pydantic import BaseModel
+from datetime import datetime
+from typing import List
 
 
-# This will ensure `pins_knocked` is always between 0 and 10
-class RollRequest(BaseModel):
-    pins_knocked: conint(ge=0, le=10)
+class GameCreate(BaseModel):
+    player: str
+
+
+class GameResponse(BaseModel):
+    id: int
+    player: str
+
+    class Config:
+        orm_mode = True
+
+
+class GameFramesUpdate(BaseModel):
+    frames: List[List[int]]  # List of lists of integers
+
+    class Config:
+        orm_mode = True

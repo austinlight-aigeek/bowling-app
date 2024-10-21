@@ -1,3 +1,4 @@
+
 bowling-app/
 ├── backend/
 │   ├── app/
@@ -26,23 +27,35 @@ bowling-app/
 │   ├── requirements.txt
 │   └── test.db
 ├── frontend/
-│   ├── node_modules/
-│   ├── public/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── api.js
-│   │   ├── App.css
-│   │   ├── App.js
-│   │   ├── App.test.js
-│   │   ├── index.css
-│   │   ├── index.js
-│   │   └── setuptest.js
-│   ├── .env.development
-│   ├── .env.production
-│   ├── .gitignore
-│   ├── Dockerfile
-│   ├── jest.config.js
-│   └── package.json
+│   ├── node_modules
+│   ├── public
+│   ├── src
+│   │   ├── __mocks__
+│   │   ├── assets
+│   │   ├── components
+│   │   │   ├── Controls
+│   │   │   │   ├── Controls.css
+│   │   │   │   ├── Controls.js
+│   │   │   │   ├── Controls.test.js
+│   │   │   ├── Game
+│   │   │   │   ├── Game.css
+│   │   │   │   ├── Game.js
+│   │   │   ├── Scorecard
+│   │   │   │   ├── Scorecard.css
+│   │   │   │   ├── Scorecard.js
+│   │   │   │   ├── Scorecard.test.js
+│   │   ├── store
+│   │   │   ├── reducer.js
+│   │   │   ├── store.js
+│   │   ├── utils
+│   │   │   ├── __tests__
+│   │   │   ├── index.js
+│   ├── api.js
+│   ├── App.css
+│   ├── App.js
+│   ├── index.css
+│   ├── index.js
+│   ├── setupTests.js
 ├── .env
 ├── .gitignore
 ├── docker-compose.yml

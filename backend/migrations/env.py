@@ -5,12 +5,14 @@ from alembic import context
 
 from app.core.config import settings
 from app.db.base import Base
-from app.db.models import Player, Game, Frame, Roll  # Import your models
+from app.db.models import Game, Frame  # Import your models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option('sqlalchemy.url', settings.DATABASE_URL.render_as_string(hide_password=False))
+config.set_main_option(
+    "sqlalchemy.url", settings.DATABASE_URL.render_as_string(hide_password=False)
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

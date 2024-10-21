@@ -37,7 +37,9 @@ def _gpt_summary(game):
     """
     summary_prompt = f"Summarize the bowling game with ID: {game.id}"
 
-    response = openai.Completion.create(engine="gpt-4", prompt=summary_prompt, max_tokens=100)
+    response = openai.Completion.create(
+        engine="gpt-4", prompt=summary_prompt, max_tokens=100
+    )
     return response.choices[0].text.strip()
 
 
@@ -54,7 +56,7 @@ def _bert_summary(game):
     summarizer = pipeline("summarization", model="bert-base-uncased")
     text = f"Summarize the bowling game with ID: {game.id}"
     summary = summarizer(text, max_length=100, min_length=30)
-    return summary[0]['summary_text']
+    return summary[0]["summary_text"]
 
 
 def _t5_summary(game):
@@ -70,7 +72,7 @@ def _t5_summary(game):
     summarizer = pipeline("summarization", model="t5-small")
     text = f"Summarize the bowling game with ID: {game.id}"
     summary = summarizer(text, max_length=100, min_length=30)
-    return summary[0]['summary_text']
+    return summary[0]["summary_text"]
 
 
 def _llama_summary(game):
