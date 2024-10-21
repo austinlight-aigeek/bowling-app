@@ -15,6 +15,7 @@ def get_llm_summary(frames, model: str = "gpt"):
 
     Args:
         frames (dict): Dictionary containing frame data.
+        model (str): The model to be used for summarization. Default is "gpt".
 
     Returns:
         str: A generated summary of the current game status.
