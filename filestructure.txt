@@ -28,7 +28,6 @@ bowling-app/
 │   ├── public
 │   ├── src
 │   │   ├── __mocks__
-│   │   ├── assets
 │   │   ├── components
 │   │   │   ├── Controls
 │   │   │   │   ├── Controls.css
@@ -37,6 +36,10 @@ bowling-app/
 │   │   │   ├── Game
 │   │   │   │   ├── Game.css
 │   │   │   │   ├── Game.js
+│   │   │   ├── GameInfo
+│   │   │   │   ├── GameInfo.css
+│   │   │   │   ├── GameInfo.js
+│   │   │   │   ├── HistoryGraph.js
 │   │   │   ├── Scorecard
 │   │   │   │   ├── Scorecard.css
 │   │   │   │   ├── Scorecard.js
