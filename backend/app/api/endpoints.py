@@ -93,7 +93,7 @@ def get_score(game_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/games/{game_id}/summary")
-async def get_summary(game_id: int, db: Session = Depends(get_db)):
+async def get_summary(game_id: int, llm: str = "gpt", db: Session = Depends(get_db)):
     """
     Get a natural language summary of the current game state using an LLM.
 
@@ -109,7 +109,22 @@ async def get_summary(game_id: int, db: Session = Depends(get_db)):
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
 
-    # Generate summary using an LLM
-    summary = await get_llm_summary(game)
+    # Fetch the frames associated with the game
+    frames = db.query(Frame).filter(Frame.game_id == game_id).all()
 
-    return {"game_id": game_id, "summary": summary}
+    formatted_frames = {f"Frame {i + 1}": frame.rolls for i, frame in enumerate(frames)}
+    if not frames:
+        raise HTTPException(status_code=404, detail="No frames found for this game")
+
+    # Use the selected LLM to generate the summary
+    if llm == "gpt":
+        summary = get_llm_summary(formatted_frames, model="gpt")
+    elif llm == "bert":
+        summary = get_llm_summary(formatted_frames, model="bert")
+    elif llm == "t5":
+        summary = get_llm_summary(formatted_frames, model="t5")
+    elif llm == "llama":
+        summary = get_llm_summary(formatted_frames, model="llama")
+    else:
+        raise HTTPException(status_code=400, detail="Invalid LLM selected")
+    return {"summary": summary}
