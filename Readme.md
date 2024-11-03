@@ -2,6 +2,8 @@
 
 This project is a full-stack bowling game management system, utilizing a Python backend with a RESTful API and a React frontend. The backend includes game logic to manage and record bowling scores, and integrates with a large language model (LLM) to generate natural language summaries of the game state. The frontend provides a user interface to interact with the system.
 
+![Bowling Game Demo](demo.gif)
+
 ## Features
 
 - Create and manage bowling games
